@@ -365,7 +365,7 @@ var app = new Vue({
 			if(list != null)
 			{
 				for(let itx in list)
-					deck.cards.push({label:list[itx]});
+					deck.cards.push({label:list[itx],date:new Date().getTime()});
 			}
 			this.decks.push(deck);
 		}
