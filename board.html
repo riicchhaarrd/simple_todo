@@ -1,0 +1,368 @@
+<html>
+<head><title>Roadmap</title>
+<script src="vue.min.js" type="text/javascript"></script>
+<style>
+html,body
+{
+margin:0;
+font-family:Helvetica;
+text-shadow:1px 1px #ccc;
+background-image:url('bg.jpg');
+background-size:100%;
+background-color:#ffe;
+}
+
+#app
+{
+width:100%;
+}
+
+.deck
+{
+padding:5px;
+float:left;
+width:300px;
+margin-left:30px;
+box-shadow:0px 0px 5px #ccc;
+background:rgba(255,255,255,0.8);
+}
+
+.deck h1
+{
+text-align:center;
+color:#bbb;
+padding-bottom:10px;
+}
+
+.deck .cards
+{
+margin:0;
+padding:0;
+list-style:none;
+}
+
+.deck .card
+{
+margin-top:5px;
+background:#fff;
+border-radius:3px;
+padding:10px;
+box-shadow:0px 0px 5px #aaa;
+color:#777;
+cursor:move;
+position:relative;
+}
+
+.deck .card span
+{
+padding-left:5px;
+word-wrap: break-word;
+}
+
+.todo
+{
+box-shadow:0px 0px 5px #888;
+}
+.doing
+{
+box-shadow:0px 0px 5px orange;
+}
+.done
+{
+box-shadow:0px 0px 5px green;
+}
+
+.todo .card span:before
+{
+content:'🟦';
+border-right:1px solid #ddd;
+padding-right:5px;
+}
+.doing .card span:before
+{
+content:'🔄';
+border-right:1px solid #ddd;
+padding-right:5px;
+}
+.done .card span:before
+{
+content:'✅';
+border-right:1px solid #ddd;
+padding-right:5px;
+}
+
+.todo .card
+{
+box-shadow:0px 0px 3px #888;
+}
+.doing .card
+{
+box-shadow:0px 0px 3px orange;
+}
+.done .card
+{
+box-shadow:0px 0px 3px green;
+}
+
+.todo h1
+{
+color:#888!important;
+border-bottom:1px solid #888;
+}
+
+.doing h1
+{
+color:orange!important;
+border-bottom:1px solid orange;
+}
+
+.done h1
+{
+color:green!important;
+border-bottom:1px solid green;
+}
+
+.deck .new
+{
+background:#fff;
+box-shadow:0px 0px 3px #ccc;
+}
+
+.plus-box
+{
+box-shadow:0px 0px 3px green;
+border:1px solid darkblue;
+background:#fff;
+width:16px;
+height:16px;
+color:green;
+padding:0;
+margin:0;
+font-size:19px;
+position:relative;
+}
+
+.plus-box:before
+{
+content:'+';
+position:absolute;
+left:2px;
+top:-3px;
+}
+a
+{
+text-decoration:none;
+color:rgb(100,150,250);
+}
+
+textarea
+{
+border:1px solid #ccc;
+border-radius:2px;
+padding:5px;
+color:#777;
+box-shadow:0px 0px 5px #ccc;
+width:100%;
+height:100px;
+}
+input[type="text"]
+{
+border:1px solid #ccc;
+border-radius:2px;
+padding:5px;
+color:#777;
+box-shadow:0px 0px 5px #ccc;
+width:100%;
+}
+.btn
+{
+margin-top:5px;
+font-weight:bold;
+cursor:pointer;
+border-radius:2px;
+padding-right:5px;
+padding-left:5px;
+padding-top:2px;
+padding-bottom:2px;
+background:#fff;
+transition:1s;
+}
+.float-right{float:right;}
+.w-100{width:100%;}
+.btn-success
+{
+border:2px solid green;
+color:green;
+box-shadow:0px 0px 2px green;
+}
+.btn-danger
+{
+border:2px solid red;
+color:red;
+box-shadow:0px 0px 2px red;
+}
+
+.btn-danger:hover
+{
+background:red;
+border:2px solid #fff;
+color:#fff;
+}
+.btn-success:hover
+{
+background:green;
+border:2px solid #fff;
+color:#fff;
+}
+
+.deck .card .action
+{
+float:right;
+margin-right:2px;
+margin-top:-7px;
+width:16px;
+height:16px;
+}
+</style>
+</head>
+<body>
+<div id="app">
+<div v-for="d in decks" class="deck" :class="d._class" v-on:dragenter="dragEnter(d, $event)">
+<h1>{{ d.name }}</h1>
+<ul class="cards">
+<li v-for="c in d.cards" class="card" draggable="true" v-on:click="editCard(c)" v-on:dragstart="dragStart(d, c, $event)" v-on:dragend="dragEnd(d, c, $event)">
+<div class="action" v-if="editingItem != c"><button class="btn btn-danger float-right" v-on:click.prevent="deleteCard(d, c, $event)">&times;</button></div>
+<span v-if="editingItem != c">
+{{ c.label }}
+</span>
+<input type="text" v-model="c.label" v-else @keypress.13.prevent="changeCard(d, c)">
+<small v-if="editingItem != c" style="clear:right;border-top:1px solid #999;margin-top:25px;float:right;color:#999;font-size:11px;">{{ formatDate(new Date(c.date)) }}</small>
+<button v-if="editingItem == c" class="btn btn-success w-100" v-on:click="changeCard(d, c, $event)">Save</button>
+<div style="clear:both;"></div>
+</li>
+</ul>
+<div class="card new" style="cursor:default;">
+	<template v-if="!d.cardNew">
+	<div class="plus-box"></div><p style="margin-top:5px;text-align:center;color:#000;"><a href="#" v-on:click.prevent="d.cardNew^=1">Add new card</a></p>
+	</template>
+	<template v-else>
+	<textarea v-model="d.newText"></textarea>
+	<button class="btn btn-success w-100" v-on:click="addCard(d)">Add card</button>
+	</template>
+</div>
+</div>
+</div>
+<script>
+(function()
+{
+var app = new Vue({
+	el: '#app',
+	data: function()
+	{
+		return {
+			decks: [],
+			dragItem: null,
+			targetDeck: null,
+			editingItem: null
+		};
+	},
+	mounted: function()
+	{
+		this.loadDecks();
+	},
+	methods: {
+		formatDate: function(d)
+		{
+			let mapping = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+			return mapping[d.getMonth()] + " " + d.getDate() + " " + d.getFullYear();
+		},
+		saveDecks: function()
+		{
+			window.localStorage.setItem("decks", JSON.stringify(
+				this.decks
+			));
+		},
+		loadDecks: function()
+		{
+			let tmp = window.localStorage.getItem("decks");
+			if(tmp == null)
+			{
+				this.createDeck("Todo", "todo", ["Example todo item"]);
+				this.createDeck("Doing", "doing");
+				this.createDeck("Done", "done");
+			} else
+			{
+				this.decks = JSON.parse(tmp);
+			}
+		},
+		changeCard: function(deck, card, ev)
+		{
+			this.editingItem=null;
+			this.saveDecks();
+			if(ev != null)
+				ev.stopPropagation();
+		},
+		deleteCard: function(deck, card, ev)
+		{
+			let idx = deck.cards.indexOf(card);
+			deck.cards.splice(idx, 1);
+			ev.stopPropagation();
+			this.saveDecks();
+		},
+		addCard: function(deck)
+		{
+			deck.cards.push({label:deck.newText,date:new Date().getTime()});
+			deck.newText = '';
+			deck.cardNew=false;
+			this.saveDecks();
+		},
+		editCard: function(card)
+		{
+			this.editingItem = card;
+		},
+		dragStart: function(currentDeck, card, ev)
+		{
+			this.dragItem = card;
+			ev.target.style.opacity = 0.5;
+		},
+		dragEnd: function(currentDeck, card, ev)
+		{
+			ev.target.style.opacity = 1;
+			//console.log(ev);
+			if(this.targetDeck != null)
+			{
+				let idx = currentDeck.cards.indexOf(card);
+				let tmp = currentDeck.cards[idx];
+				currentDeck.cards.splice(idx, 1);
+				this.targetDeck.cards.push(tmp);
+				this.targetDeck=null;
+				this.saveDecks();
+			}
+		},
+		dragEnter: function(deck, ev)
+		{
+			//console.log(deck.name, ev);
+			this.targetDeck = deck;
+		},
+		createDeck: function(name, _class, list)
+		{
+			let deck = {
+				name: name,
+				cards: [],
+				_class: _class,
+				cardNew: false,
+				newText: ''
+			};
+			if(list != null)
+			{
+				for(let itx in list)
+					deck.cards.push({label:list[itx]});
+			}
+			this.decks.push(deck);
+		}
+	}
+});
+})();
+</script>
+</body>
+</html>
